@@ -9,7 +9,7 @@ BaselineOfTuqui >> baseline: spec [
 	<baseline>
 	spec for: #common do: [
 		spec baseline: 'Powerlang' with: [
-			spec loads: 'SCompiler'.
+			spec loads: 'base-compiler'.
 			spec repository: 'github://powerlang/powerlang:main/src'
 		].
 
