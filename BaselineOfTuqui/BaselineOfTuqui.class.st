@@ -14,7 +14,7 @@ BaselineOfTuqui >> baseline: spec [
 		].
 
 		spec package: 'Tuqui-Evaluation' with:[
-			spec requires: 'Powerlang-SCompiler'.
+			spec requires: 'Powerlang'.
 		].
 
 		spec package: 'Tuqui-Tests'.
