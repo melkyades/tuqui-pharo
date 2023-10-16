@@ -64,6 +64,7 @@ TuquiImage >> basicNewBehavior: instSize [
 		          hash: 0.
 	behavior := TqBehaviorObject new.
 	^ behavior
+			runtime: self;
 		  header: header;
 		  nilSlots: nilObj
 ]

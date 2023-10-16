@@ -163,7 +163,7 @@ TuquiRingBootstrapper >> genesis [
 	self fixBehaviors.
 	specs allClasses do: [ :def | self createSpecies: def ].
 	specs allClasses do: [ :def | self initializeSpecies: def ].
-
+	image initializeFrom: self
 ]
 
 { #category : #initialization }
@@ -183,7 +183,7 @@ TuquiRingBootstrapper >> initialize [
 	spec2behavior := IdentityDictionary new.
 	behavior2spec := IdentityDictionary new.
 	slotNames := IdentityDictionary new.
-	image := TuquiImage new wordSize: 8
+	image := TuquiRuntime new wordSize: 8
 ]
 
 { #category : #building }

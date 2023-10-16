@@ -32,6 +32,11 @@ TqSmallInteger >> printOn: aStream [
 		nextPut: $>
 ]
 
+{ #category : #evaluating }
+TqSmallInteger >> value [
+	^value
+]
+
 { #category : #accessing }
 TqSmallInteger >> value: anInteger [
 	value := anInteger

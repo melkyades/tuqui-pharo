@@ -47,6 +47,11 @@ TqHeapObject >> isSmall [
 ]
 
 { #category : #accessing }
+TqHeapObject >> printOn: aStream [
+	self behavior printInstance: self on: aStream
+]
+
+{ #category : #accessing }
 TqHeapObject >> size [
 	^header size
 ]
