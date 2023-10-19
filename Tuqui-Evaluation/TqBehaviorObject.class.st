@@ -8,6 +8,13 @@ Class {
 }
 
 { #category : #accessing }
+TqBehaviorObject >> localClassName [
+	| class |
+	class := runtime behaviorClass: self.
+	^ runtime speciesLocalName: class
+]
+
+{ #category : #accessing }
 TqBehaviorObject >> printInstance: aTqObject on: aStream [
 	runtime print: aTqObject on: aStream
 ]

@@ -91,3 +91,15 @@ TuquiImageTest >> test050metaclasses [
 	metaproto := bootstrapper metaclassFor: spec metaclass.
 	self assert: (bootstrapper ivarOf: metaproto named: #class) equals: proto
 ]
+
+{ #category : #tests }
+TuquiImageTest >> test100yourself [
+
+	| spec proto behavior md yourself |
+	spec := bootstrapper => #ProtoObject.
+	proto := bootstrapper classFor: spec.
+	behavior := bootstrapper ivarOf: proto named: #instanceBehavior.
+	md := bootstrapper ivarOf: behavior named: #methods.
+	yourself := bootstrapper addSymbol: #yourself.
+	self assert: (md includesKey: yourself)
+]

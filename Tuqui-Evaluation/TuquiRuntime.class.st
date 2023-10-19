@@ -5,12 +5,10 @@ Class {
 		'behaviorNextIndex',
 		'behaviorMethodDictionaryIndex',
 		'behaviorClassIndex',
-		'classModuleIndex',
 		'classNameIndex',
 		'closureBlockIndex',
 		'dictionaryTableIndex',
 		'metaclassInstanceClassIndex',
-		'methodAstcodesIndex',
 		'methodClassBindingIndex',
 		'methodExecutableCodeIndex',
 		'methodFlagsIndex',
@@ -20,7 +18,8 @@ Class {
 		'speciesSuperclassIndex',
 		'speciesIvarsIndex',
 		'metaclassClass',
-		'smallIntegerClass'
+		'smallIntegerClass',
+		'methodTreecodesIndex'
 	],
 	#category : #'Tuqui-Evaluation-Runtime'
 }
@@ -49,7 +48,7 @@ TuquiRuntime >> initializeFrom: bootstrapper [
     classNameIndex := (bootstrapper => #Class) allInstVarNames indexOf: 'name'.
     closureBlockIndex := (bootstrapper => #Closure) allInstVarNames indexOf: 'block'.
     metaclassInstanceClassIndex := (bootstrapper => #Metaclass) allInstVarNames indexOf: 'class'.
-    methodAstcodesIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'treecodes'.
+    methodTreecodesIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'treecodes'.
     methodClassBindingIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'class'.
     methodExecutableCodeIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'executableCode'.
     methodFlagsIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'flags'.
@@ -71,6 +70,12 @@ TuquiRuntime >> isMetaclass: aTqObject [
 { #category : #accessing }
 TuquiRuntime >> metaclassInstanceClass: aTqObject [
 	^ aTqObject slotAt: metaclassInstanceClassIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodClassBinding: aTqObject [
+
+	^ aTqObject slotAt: methodClassBindingIndex
 ]
 
 { #category : #accessing }

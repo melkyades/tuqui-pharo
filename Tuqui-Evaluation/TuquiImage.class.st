@@ -84,16 +84,21 @@ TuquiImage >> basicNewBytesWith: aByteObject [
 ]
 
 { #category : #initialization }
-TuquiImage >> basicNewSlotsSized: anInteger [
+TuquiImage >> basicNewSlots: type sized: anInteger [
 	| header result |
 	header := TqObjectHeader new
 		bytes: false arrayed: false named: true;
 		size: anInteger;
 		hash: 0.
-	result := TqSlotObject new.
+	result := type new.
 	^ result
 		header: header;
 		nilSlots: nilObj
+]
+
+{ #category : #initialization }
+TuquiImage >> basicNewSlotsSized: anInteger [
+	^self basicNewSlots: TqSlotObject sized: anInteger
 ]
 
 { #category : #accessing }
@@ -150,6 +155,19 @@ TuquiImage >> newSlots: behavior size: anInteger [
 	| result |
 	result := self basicNewSlotsSized: anInteger.
 	^ result behavior: behavior
+]
+
+{ #category : #initialization }
+TuquiImage >> newVMDictionary: behavior size: anInteger [
+
+	| result |
+	result := self basicNewSlots: TqVMDictionary sized: anInteger.
+	^ result behavior: behavior
+]
+
+{ #category : #accessing }
+TuquiImage >> nil [
+	^ nilObj
 ]
 
 { #category : #accessing }
