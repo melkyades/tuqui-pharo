@@ -52,6 +52,35 @@ TqEvaluationTest >> compile: aString in: classname during: aBlock [
 ]
 
 { #category : #tests }
+TqEvaluationTest >> convert: anObject with: map [
+	map at: anObject ifPresent: [:mapped | ^mapped ].
+	anObject ifNil: [ ^runtime nil ].
+	anObject isInteger
+		ifTrue: [ ^ runtime newInteger: anObject ].
+	anObject isSymbol
+		ifTrue: [ ^ runtime addSymbol: anObject ].
+	anObject isString
+		ifTrue: [ ^ runtime newString: anObject ].
+	anObject class = ByteArray
+		ifTrue: [ ^ runtime newByteArray: anObject ].
+	anObject class = SCompiledBlock ifTrue: [ ^self convertBlock: anObject with: map ].
+	self ASSERT: false
+]
+
+{ #category : #tests }
+TqEvaluationTest >> convertBlock: anSCompiledBlock with: map [
+	| class result instsize slot |
+	class := self globalNamed: #CompiledBlock.
+	result := runtime newSlots: class size: 0.
+	map at: anSCompiledBlock put: result.
+	instsize := anSCompiledBlock class instSize.
+	1 to: instsize do: [ :i | 
+		slot := anSCompiledBlock instVarAt: i.
+		result slotAt: i put: (self convert: slot with: map) ].
+	^ result
+]
+
+{ #category : #tests }
 TqEvaluationTest >> convertMethod: anSCompiledMethod [
 	| class |
 	
@@ -406,5 +435,36 @@ TqEvaluationTest >> test302smallIntegerPrintString [
 				assert: result isBytes;
 				assert: result value asLocalString
 					equals: -4 printString ].
+	self assertNoLeftoverFrames
+]
+
+{ #category : #tests }
+TqEvaluationTest >> test310smiFallbackToLNI [
+	| result |
+	self
+		compile:
+			'foo | result | result := (16r100000000 * -16r100000000) printString. ^result'
+		in: #ProtoObject
+		during: [ result := runtime sendLocal: #foo to: runtime true.
+			self
+				assert: result isBytes;
+				assert: result value asLocalString
+					equals: (16r100000000 * -16r100000000) printString ].
+	self assertNoLeftoverFrames
+]
+
+{ #category : #tests }
+TqEvaluationTest >> test310smiFallbackToLPI [
+	| result expected |
+	self
+		compile:
+			'foo | result | result := 1. 18 timesRepeat: [result := result * 10]. ^result printString'
+		in: #ProtoObject
+		during: [ result := runtime sendLocal: #foo to: runtime true.
+			expected := 1.
+			18 timesRepeat: [ expected := expected * 10 ].
+			self
+				assert: result isBytes;
+				assert: result value asLocalString equals: expected printString ].
 	self assertNoLeftoverFrames
 ]
