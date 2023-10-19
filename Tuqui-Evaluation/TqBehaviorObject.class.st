@@ -8,6 +8,13 @@ Class {
 }
 
 { #category : #accessing }
+TqBehaviorObject >> classInstSize [
+	| class |
+	class := runtime behaviorClass: self.
+	^runtime speciesInstanceSize: class
+]
+
+{ #category : #accessing }
 TqBehaviorObject >> localClassName [
 	| class |
 	class := runtime behaviorClass: self.

@@ -2,6 +2,9 @@ Class {
 	#name : #TuquiRuntime,
 	#superclass : #TuquiImage,
 	#instVars : [
+		'methodCache',
+		'symbolCache',
+		'evaluatorType',
 		'behaviorNextIndex',
 		'behaviorMethodDictionaryIndex',
 		'behaviorClassIndex',
@@ -11,7 +14,6 @@ Class {
 		'metaclassInstanceClassIndex',
 		'methodClassBindingIndex',
 		'methodExecutableCodeIndex',
-		'methodFlagsIndex',
 		'methodSelectorIndex',
 		'speciesInstanceBehaviorIndex',
 		'speciesFormatIndex',
@@ -19,7 +21,20 @@ Class {
 		'speciesIvarsIndex',
 		'metaclassClass',
 		'smallIntegerClass',
-		'methodTreecodesIndex'
+		'methodTreecodesIndex',
+		'lastHash',
+		'currentEvaluator',
+		'methodClass',
+		'methodInstSize',
+		'methodFormatIndex',
+		'arrayClass',
+		'blockClass',
+		'closureClass',
+		'blockFormatIndex'
+	],
+	#pools : [
+		'SCompiledBlockFlags',
+		'SCompiledMethodFlags'
 	],
 	#category : #'Tuqui-Evaluation-Runtime'
 }
@@ -30,8 +45,56 @@ TuquiRuntime >> behaviorClass: aTqObject [
 ]
 
 { #category : #accessing }
+TuquiRuntime >> behaviorMethodDictionary: aTqObject [
+
+	^ aTqObject slotAt: behaviorMethodDictionaryIndex
+]
+
+{ #category : #accessing }
+TuquiRuntime >> behaviorNext: aTqObject [
+
+	^ aTqObject slotAt: behaviorNextIndex
+]
+
+{ #category : #accessing }
 TuquiRuntime >> behaviorOf: aTqObject [
 	^aTqObject isImmediate ifTrue: [ self smallIntegerBehavior ] ifFalse: [aTqObject behavior]
+]
+
+{ #category : #initialization }
+TuquiRuntime >> blockCapturesSelf: block [
+
+	| flags |
+	flags := block slotAt: methodFormatIndex.
+	^ flags value anyMask: BlockCapturesSelf
+]
+
+{ #category : #initialization }
+TuquiRuntime >> blockEnvironmentCount: aTqObject [
+
+	| flags |
+	flags := aTqObject slotAt: blockFormatIndex.
+	^ flags value bitsAt: BlockEnvCount
+]
+
+{ #category : #initialization }
+TuquiRuntime >> blockExecutableCode: aTqObject [
+
+	^ self methodExecutableCode: aTqObject
+]
+
+{ #category : #initialization }
+TuquiRuntime >> blockExecutableCode: aTqObject put: anObject [
+
+	^ self methodExecutableCode: aTqObject put: anObject
+]
+
+{ #category : #initialization }
+TuquiRuntime >> blockTempCount: aTqObject [
+
+	| flags |
+	flags := aTqObject slotAt: blockFormatIndex.
+	^ flags value bitsAt: BlockTempCount
 ]
 
 { #category : #accessing }
@@ -39,27 +102,111 @@ TuquiRuntime >> className: aTqObject [
 	^ aTqObject slotAt: classNameIndex
 ]
 
+{ #category : #initialization }
+TuquiRuntime >> closureBlock: closure [
+
+	^ closure slotAt: closureBlockIndex
+]
+
+{ #category : #accessing }
+TuquiRuntime >> currentEvaluator [
+
+	^ currentEvaluator ifNil: [
+		  currentEvaluator := evaluatorType new runtime: self]
+]
+
+{ #category : #initialization }
+TuquiRuntime >> doLookup: symbol startingAt: aBehavior [
+
+	| behavior m |
+	behavior := aBehavior.
+	[
+	m := self methodFor: symbol in: behavior.
+	m ifNotNil: [ ^ m ].
+	behavior := self behaviorNext: behavior.
+	behavior !== nilObj ] whileTrue.
+	^ nil
+]
+
+{ #category : #initialization }
+TuquiRuntime >> hashFor: aTqObject [
+	| shifted hash current |
+	aTqObject isImmediate
+		ifTrue: [ ^ aTqObject value ].
+	current := aTqObject headerHash.
+	current != 0
+		ifTrue: [ ^ current ].
+	shifted := lastHash bitShift: -1.
+	hash := (lastHash bitAnd: 1) = 0
+		ifTrue: [ shifted ]
+		ifFalse: [ shifted bitXor: 16rB9C8 ].
+	aTqObject headerHash: hash.
+	^ lastHash := hash
+]
+
+{ #category : #initialization }
+TuquiRuntime >> initialize [
+
+	lastHash := 1.
+	methodCache := Dictionary new.
+	symbolCache := IdentityDictionary new.
+	super initialize
+]
+
 { #category : #accessing }
 TuquiRuntime >> initializeFrom: bootstrapper [
-	
-	  behaviorNextIndex := (bootstrapper => #Behavior) allInstVarNames indexOf: 'next'.
-    behaviorMethodDictionaryIndex := (bootstrapper => #Behavior) allInstVarNames indexOf: 'methods'.
-    behaviorClassIndex := (bootstrapper => #Behavior) allInstVarNames indexOf: 'class'.
-    classNameIndex := (bootstrapper => #Class) allInstVarNames indexOf: 'name'.
-    closureBlockIndex := (bootstrapper => #Closure) allInstVarNames indexOf: 'block'.
-    metaclassInstanceClassIndex := (bootstrapper => #Metaclass) allInstVarNames indexOf: 'class'.
-    methodTreecodesIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'treecodes'.
-    methodClassBindingIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'class'.
-    methodExecutableCodeIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'executableCode'.
-    methodFlagsIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'flags'.
-    methodSelectorIndex := (bootstrapper => #CompiledMethod) allInstVarNames indexOf: 'selector'.
-    speciesInstanceBehaviorIndex := (bootstrapper => #Species) allInstVarNames indexOf: 'instanceBehavior'.
-    speciesFormatIndex := (bootstrapper => #Species) allInstVarNames indexOf: 'format'.
-    speciesSuperclassIndex := (bootstrapper => #Species) allInstVarNames indexOf: 'superclass'.
-    speciesIvarsIndex := (bootstrapper => #Species) allInstVarNames indexOf: 'instanceVariables'.
-		metaclassClass := bootstrapper classNamed: #Metaclass.
-		smallIntegerClass := bootstrapper classNamed: #SmallInteger
 
+	behaviorNextIndex := (bootstrapper => #Behavior) allInstVarNames
+		                     indexOf: 'next'.
+	behaviorMethodDictionaryIndex := (bootstrapper => #Behavior)
+		                                 allInstVarNames indexOf: 'methods'.
+	behaviorClassIndex := (bootstrapper => #Behavior) allInstVarNames
+		                      indexOf: 'class'.
+	classNameIndex := (bootstrapper => #Class) allInstVarNames indexOf:
+		                  'name'.
+	closureBlockIndex := (bootstrapper => #Closure) allInstVarNames
+		                     indexOf: 'block'.
+	metaclassInstanceClassIndex := (bootstrapper => #Metaclass)
+		                               allInstVarNames indexOf: 'class'.
+	methodTreecodesIndex := (bootstrapper => #CompiledMethod)
+		                        allInstVarNames indexOf: 'treecodes'.
+	methodClassBindingIndex := (bootstrapper => #CompiledMethod)
+		                           allInstVarNames indexOf: 'class'.
+	methodExecutableCodeIndex := (bootstrapper => #CompiledMethod)
+		                             allInstVarNames indexOf:
+		                             'executableCode'.
+	methodFormatIndex := (bootstrapper => #CompiledMethod)
+		                     allInstVarNames indexOf: 'format'.
+	methodSelectorIndex := (bootstrapper => #CompiledMethod)
+		                       allInstVarNames indexOf: 'selector'.
+	methodInstSize := (bootstrapper => #CompiledMethod) allInstVarNames
+		                  size.
+		
+	blockFormatIndex := (bootstrapper => #CompiledBlock)
+		                     allInstVarNames indexOf: 'format'.
+
+	speciesInstanceBehaviorIndex := (bootstrapper => #Species)
+		                                allInstVarNames indexOf:
+		                                'instanceBehavior'.
+	speciesFormatIndex := (bootstrapper => #Species) allInstVarNames
+		                      indexOf: 'format'.
+	speciesSuperclassIndex := (bootstrapper => #Species) allInstVarNames
+		                          indexOf: 'superclass'.
+	speciesIvarsIndex := (bootstrapper => #Species) allInstVarNames
+		                     indexOf: 'instanceVariables'.
+	metaclassClass := bootstrapper classNamed: #Metaclass.
+	smallIntegerClass := bootstrapper classNamed: #SmallInteger.
+	methodClass := bootstrapper classNamed: #CompiledMethod.
+	blockClass := bootstrapper classNamed: #CompiledBlock.
+	closureClass := bootstrapper classNamed: #Closure.
+	arrayClass := bootstrapper classNamed: #Array.
+	self useStackedIterativeEvaluator
+]
+
+{ #category : #initialization }
+TuquiRuntime >> isBlock: compiledCode [
+
+	^ (self behaviorClass: compiledCode behavior) == blockClass
 ]
 
 { #category : #accessing }
@@ -68,14 +215,177 @@ TuquiRuntime >> isMetaclass: aTqObject [
 ]
 
 { #category : #accessing }
+TuquiRuntime >> literalFor: anObject [
+
+	^ anObject
+]
+
+{ #category : #accessing }
+TuquiRuntime >> localSymbolFrom: anObject [
+
+	^ anObject bytes allButLast asString asSymbol
+]
+
+{ #category : #initialization }
+TuquiRuntime >> lookup: symbol startingAt: aBehavior [
+
+	^ methodCache
+		  at: symbol -> aBehavior
+		  ifAbsentPut: [ self doLookup: symbol startingAt: aBehavior ]
+]
+
+{ #category : #accessing }
 TuquiRuntime >> metaclassInstanceClass: aTqObject [
 	^ aTqObject slotAt: metaclassInstanceClassIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> method: method literalAt: index [
+
+	^ method slotAt: methodInstSize + index
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodArgumentCount: aTqObject [
+
+	| flags |
+	flags := aTqObject slotAt: methodFormatIndex.
+	^ flags value bitsAt: ArgCount
 ]
 
 { #category : #initialization }
 TuquiRuntime >> methodClassBinding: aTqObject [
 
 	^ aTqObject slotAt: methodClassBindingIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodEnvironmentSize: anLMRObject [
+
+	| flags |
+	flags := anLMRObject slotAt: methodFormatIndex.
+	^ flags value bitsAt: EnvCount
+]
+
+{ #category : #accessing }
+TuquiRuntime >> methodExecutableCode: anTqObject [
+
+	| slot |
+	slot := anTqObject slotAt: methodExecutableCodeIndex.
+	^ slot == nilObj
+		  ifTrue: [ slot ]
+		  ifFalse: [ slot code ]
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodExecutableCode: aTqObject put: anObject [
+
+	| code |
+	code := self newSlotsOf: arrayClass type: TqExecutableCode.
+	code code: anObject.
+	aTqObject slotAt: methodExecutableCodeIndex put: code
+]
+
+{ #category : #accessing }
+TuquiRuntime >> methodFor: symbol in: behavior [
+
+	| md |
+	md := self behaviorMethodDictionary: behavior.
+	^ md atKey: symbol ifAbsent: nil
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodTempCount: aTqObject [
+
+	| flags |
+	flags := aTqObject slotAt: methodFormatIndex.
+	^ flags value bitsAt: TempCount
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodTreecodes: anLMRObject [
+
+	^ anLMRObject slotAt: methodTreecodesIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newArraySized: anInteger [
+
+	| behavior |
+	behavior := self speciesInstanceBehavior: arrayClass.
+	^self newArrayedSlots: behavior size: anInteger named: false
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newClosureFor: compiledBlock [
+
+	| size closure |
+	size := self blockEnvironmentCount: compiledBlock.
+	closure := self newSlotsOf: closureClass size: size.
+	closure slotAt: closureBlockIndex put: compiledBlock.
+	^ closure
+
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newCompiledMethod [
+
+	| behavior method |
+	behavior := self speciesInstanceBehavior: methodClass.
+	method := self newSlots: behavior size: methodInstSize.
+	method slotAt: methodFormatIndex put: (self newInteger: 0).
+	^ method
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newEnvironmentSized: anInteger [
+
+	^ self newArraySized: anInteger
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newInteger: anInteger [
+	anInteger > maxSMI
+		ifTrue: [ ^ self newLargePositiveInteger: anInteger ].
+	anInteger < minSMI
+		ifTrue: [ ^ self newLargeNegativeInteger: anInteger ].
+	^ TqSmallInteger new value: anInteger
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newSlotsOf: class [
+
+	^ self newSlotsOf: class size: 0
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newSlotsOf: class size: size [
+
+	| ivars behavior |
+	ivars := self speciesInstanceSize: class.
+	behavior := self speciesInstanceBehavior: class.
+	^self newSlots: behavior size: ivars + size.
+
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newSlotsOf: class type: type [
+
+	| ivars behavior result |
+	ivars := self speciesInstanceSize: class.
+	behavior := self speciesInstanceBehavior: class.
+	result := self basicNewSlots: type sized: ivars.
+	^ result behavior: behavior
+]
+
+{ #category : #initialization }
+TuquiRuntime >> newVMDictionaryOf: class [
+
+
+	| ivars behavior |
+	ivars := self speciesInstanceSize: class.
+	behavior := self speciesInstanceBehavior: class.
+	self newVMDictionary: behavior size: ivars
 ]
 
 { #category : #accessing }
@@ -116,6 +426,45 @@ TuquiRuntime >> printBehavior: aTqBehavior on: aStream [
 ]
 
 { #category : #accessing }
+TuquiRuntime >> registerCache: anSMessage for: symbol [
+
+	| messages |
+	messages := symbolCache
+		            at: symbol
+		            ifAbsentPut: [ OrderedCollection new ].
+	messages add: anSMessage
+]
+
+{ #category : #accessing }
+TuquiRuntime >> sendLocal: aSymbol to: receiver [
+	^ self sendLocal: aSymbol to: receiver with: {}
+]
+
+{ #category : #accessing }
+TuquiRuntime >> sendLocal: aSymbol to: receiver with: anArray [
+
+	| symbol |
+	symbol := self symbolFromLocal: aSymbol.
+	^ self currentEvaluator evaluateSend: symbol to: receiver with: anArray
+]
+
+{ #category : #initialization }
+TuquiRuntime >> sexpressionsOf: method [
+
+	| expressions treecodes decoder |
+	expressions := self methodExecutableCode: method.
+	expressions == nilObj ifFalse: [ ^ expressions ].
+	treecodes := self methodTreecodes: method.
+	decoder := TqTreecodeDecoder new
+		           stream: treecodes bytes readStream;
+		           method: method;
+		           builder: self.
+	expressions := decoder decodeMethod.
+	self methodExecutableCode: method put: expressions.
+	^ expressions
+]
+
+{ #category : #accessing }
 TuquiRuntime >> smallIntegerBehavior [
 	^self speciesInstanceBehavior: smallIntegerClass
 ]
@@ -134,6 +483,11 @@ TuquiRuntime >> speciesInstanceBehavior: aTqObject [
 	^aTqObject slotAt: speciesInstanceBehaviorIndex
 ]
 
+{ #category : #initialization }
+TuquiRuntime >> speciesInstanceSize: aTqObject [
+	^ (aTqObject slotAt: speciesFormatIndex) value bitAnd: 16r7F.
+]
+
 { #category : #accessing }
 TuquiRuntime >> speciesLocalName: species [
 	| name class |
@@ -144,4 +498,30 @@ TuquiRuntime >> speciesLocalName: species [
 	class := self metaclassInstanceClass: species. 
 	name := self className: class.
 	^ name asLocalString, ' class'
+]
+
+{ #category : #initialization }
+TuquiRuntime >> symbolFromLocal: aSymbol [
+
+	^(symbols symbolNamed: aSymbol) ifNil: [ 	self error: 'symbol not found' ]
+]
+
+{ #category : #accessing }
+TuquiRuntime >> useLinkedIterativeEvaluator [
+
+	evaluatorType := TqLinkedIterativeEvaluator.
+	currentEvaluator := nil
+]
+
+{ #category : #accessing }
+TuquiRuntime >> useRecursiveEvaluator [
+	evaluatorType := TqRecursiveEvaluator.
+	currentEvaluator := nil
+
+]
+
+{ #category : #accessing }
+TuquiRuntime >> useStackedIterativeEvaluator [
+
+	evaluatorType := TqStackedIterativeEvaluator
 ]

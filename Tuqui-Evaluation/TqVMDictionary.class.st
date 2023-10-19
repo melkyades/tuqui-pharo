@@ -8,6 +8,12 @@ Class {
 }
 
 { #category : #initialization }
+TqVMDictionary >> atKey: aTqByteObject ifAbsent: aBlock [
+
+	^contents at: aTqByteObject ifAbsent: aBlock
+]
+
+{ #category : #initialization }
 TqVMDictionary >> atKey: aTqByteObject put: method [
 
 	contents at: aTqByteObject put: method

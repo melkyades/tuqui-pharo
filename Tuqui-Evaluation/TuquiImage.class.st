@@ -112,7 +112,7 @@ TuquiImage >> initialize [
 	nilObj := self basicNewSlotsSized: 0.
 	trueObj := self basicNewSlotsSized: 0.
 	falseObj := self basicNewSlotsSized: 0.
-	symbols := OrderedDictionary new.
+
 ]
 
 { #category : #accessing }
@@ -168,6 +168,11 @@ TuquiImage >> newVMDictionary: behavior size: anInteger [
 { #category : #accessing }
 TuquiImage >> nil [
 	^ nilObj
+]
+
+{ #category : #accessing }
+TuquiImage >> symbols: aTqSymbolSet [
+	symbols := aTqSymbolSet
 ]
 
 { #category : #accessing }

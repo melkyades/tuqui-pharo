@@ -132,6 +132,18 @@ TuquiRingBootstrapper >> createSpecies: definition [
 	spec2metaclass at: definition metaclass put: meta
 ]
 
+{ #category : #'private - helpers' }
+TuquiRingBootstrapper >> createSymbolTable [
+
+	| spec behavior instSize |
+	spec := self => #SymbolSet.
+	behavior := spec2behavior at: spec.
+	instSize := spec instSize.
+	symbols := image basicNewSlots: TqSymbolSet sized: instSize.
+	symbols behavior: behavior.
+	image symbols: symbols
+]
+
 { #category : #accessing }
 TuquiRingBootstrapper >> cvarOf: class named: aSymbol put: aTqObject [
 	| cvars symbol |
@@ -198,13 +210,17 @@ TuquiRingBootstrapper >> genesis [
 	specs allClasses do: [ :def | self createBehavior: def ].
 	self fixBehaviors.
 	specs allClasses do: [ :def | self createSpecies: def ].
+	self 		createSymbolTable.
 	specs allClasses do: [ :def | self initializeSpecies: def ].
 	image initializeFrom: self.
 	self
-		initializeSymbolTable;
-		initializeCharacters; initializeClassVars.
-	specs allClasses do: [ :def | self initializeMethodDictionary: def; initializeMethodDictionary: def metaclass ].
-		
+
+		initializeCharacters;
+		initializeClassVars.
+	specs allClasses do: [ :def |
+		self
+			initializeMethodDictionary: def;
+			initializeMethodDictionary: def metaclass ]
 ]
 
 { #category : #initialization }
@@ -277,7 +293,7 @@ TuquiRingBootstrapper >> initializeClass: definition superclass: superclass supe
 	subclasses := definition subclasses collect: [ :def |
 		              spec2class at: def ].
 	subclasses := self newArray: subclasses.
-	name := self newString: definition name.
+	name := self addSymbol: definition name.
 	flag := self formatOfClass: definition.
 	format := self newInteger: flag.
 	ivars := self newStringArray: definition instVarNames.
@@ -298,6 +314,7 @@ TuquiRingBootstrapper >> initializeClass: definition superclass: superclass supe
 TuquiRingBootstrapper >> initializeClassVars [
 
 	self
+		initializeSymbolTable;
 		initializeBlockFlags;
 		initializeClosureIndexes;
 		initializeHashTable;
@@ -457,13 +474,7 @@ TuquiRingBootstrapper >> initializeSpeciesCvars [
 { #category : #'private - helpers' }
 TuquiRingBootstrapper >> initializeSymbolTable [
 
-	| spec behavior instSize |
-	spec := self => #SymbolSet.
-	behavior := spec2behavior at: spec.
-	instSize := spec instSize.
-	symbols := image basicNewSlots: TqSymbolSet sized: instSize.
-	symbols behavior: behavior.
-	self cvarOfSpec: self => #Symbol named: #SymbolTable put: symbols
+	self cvarOfSpec: self => #Symbol named: #SymbolTable put: symbols.
 ]
 
 { #category : #building }
