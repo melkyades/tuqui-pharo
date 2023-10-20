@@ -498,6 +498,12 @@ TuquiRuntime >> speciesLocalName: species [
 	^ name asLocalString, ' class'
 ]
 
+{ #category : #accessing }
+TuquiRuntime >> speciesSuperclass: aTqObject [
+
+	^ aTqObject slotAt: speciesSuperclassIndex
+]
+
 { #category : #initialization }
 TuquiRuntime >> symbolFromLocal: aSymbol [
 

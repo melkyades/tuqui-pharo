@@ -76,3 +76,36 @@ TqRecursiveEvaluator >> primitiveClosureWhileTrue [
 		evaluateClosure: context self
 		whileTrue: context arguments first ]
 ]
+
+{ #category : #visiting }
+TqRecursiveEvaluator >> send: aSymbol to: receiver with: arguments super: aBoolean sendSite: anSMessage [
+
+	| behavior method environment size |
+	behavior := aBoolean
+		            ifTrue: [ runtime superBehaviorOf: context classBinding ]
+		            ifFalse: [ runtime behaviorOf: receiver ].
+	method := self
+		          lookup: aSymbol
+		          startingAt: behavior
+		          sendSite: anSMessage.
+	method isBlock ifTrue: [ ^ method value: receiver value: arguments ].
+	self ASSERT: method notNil.
+	size := runtime methodEnvironmentSize: method.
+	environment := runtime newEnvironmentSized: size.
+	context := TqRecursiveLinkedContext new
+		           runtime: runtime;
+		           self: receiver;
+		           arguments: arguments;
+		           environment: environment;
+		           parent: context;
+		           method: method.
+	^ context evaluateFor: self
+]
+
+{ #category : #visiting }
+TqRecursiveEvaluator >> superBehaviorOf: class [
+
+	| superclass |
+	superclass := self speciesSuperclass: class.
+	^ self speciesInstanceBehavior: superclass
+]
