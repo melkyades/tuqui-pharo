@@ -22,23 +22,22 @@ TqTreecodeDecoder class >> initialize [
 	NodeTypes := Dictionary new.
 	BindingTypes := Dictionary new.
 	NodeTypes
-		at: AssignmentId put: SAssignment;
-		at: BlockId put: SBlock;
-		at: CascadeId put: SCascade;
-		at: LiteralId put: SLiteral;
-		at: IdentifierId put: SIdentifier;
-		at: MessageId put: SMessage;
-		at: ReturnId put: SReturn.
+		at: AssignmentId put: TqAssignment;
+		at: BlockId put: TqBlock;
+		at: CascadeId put: TqCascade;
+		at: LiteralId put: TqLiteral;
+		at: IdentifierId put: TqIdentifier;
+		at: MessageId put: TqMessage;
+		at: ReturnId put: TqReturn.
 	BindingTypes
-		at: NilId put: SNilBinding;
-		at: TrueId put: STrueBinding;
-		at: FalseId put: SFalseBinding;
-		at: ArgumentId put: SArgumentBinding;
-		at: TemporaryId put: STemporaryBinding;
-		at: SelfId put: SSelfBinding;
-		at: SuperId put: SSuperBinding;
-		at: DynamicVarId put: SDynamicBinding;
-		at: NestedDynamicVarId put: SNestedDynamicBinding
+		at: NilId put: TqNilBinding;
+		at: TrueId put: TqTrueBinding;
+		at: FalseId put: TqFalseBinding;
+		at: ArgumentId put: TqArgumentBinding;
+		at: TemporaryId put: TqTemporaryBinding;
+		at: SelfId put: TqSelfBinding;
+		at: SuperId put: TqSuperBinding;
+		at: DynamicVarId put: TqDynamicBinding
 ]
 
 { #category : #public }
@@ -53,7 +52,7 @@ TqTreecodeDecoder >> builder: aRuntime [
 
 { #category : #public }
 TqTreecodeDecoder >> decodeArgument [
-	^ SArgumentBinding new
+	^ TqArgumentBinding new
 		index: self nextInteger;
 		environment: self nextEnvironment
 ]
@@ -61,7 +60,7 @@ TqTreecodeDecoder >> decodeArgument [
 { #category : #public }
 TqTreecodeDecoder >> decodeAssignment [
 	| assignment assignees |
-	assignment := SAssignment new.
+	assignment := TqAssignment new.
 	
 	assignees := self nextExpressionArray.
 	assignment expression: self nextExpression.
@@ -72,7 +71,7 @@ TqTreecodeDecoder >> decodeAssignment [
 { #category : #public }
 TqTreecodeDecoder >> decodeBlock [
 	| expression inlined block index |
-	expression := SBlock new.
+	expression := TqBlock new.
 	inlined := self nextBoolean.
 	inlined
 		ifTrue: [ expression inlinedArgs: self nextArray ]
@@ -90,12 +89,12 @@ TqTreecodeDecoder >> decodeBlock [
 { #category : #public }
 TqTreecodeDecoder >> decodeCascade [
 	| cascade receiver messages message count |
-	cascade := SCascade new.
+	cascade := TqCascade new.
 	receiver := self nextExpression.
 	count := self nextInteger.
 	messages := (1 to: count)
 		collect: [ :i | 
-			message := SCascadeMessage decodeUsing: self.
+			message := TqCascadeMessage decodeUsing: self.
 			message cascade: cascade ].
 	^ cascade
 		receiver: receiver;
@@ -107,14 +106,14 @@ TqTreecodeDecoder >> decodeCascadeMessage [
 	| selector arguments |
 	selector := self nextSymbol.
 	arguments := self nextExpressionArray.
-	^ SCascadeMessage new
+	^ TqCascadeMessage new
 		selector: selector;
 		arguments: arguments
 ]
 
 { #category : #public }
 TqTreecodeDecoder >> decodeDynamicVar [
-	^ SDynamicBinding new name: self nextSymbol
+	^ TqDynamicBinding new name: self nextSymbol
 ]
 
 { #category : #public }
@@ -122,7 +121,7 @@ TqTreecodeDecoder >> decodeIdentifier [
 	| type binding |
 	type := self bindingTypeOf: self nextInteger.
 	binding := type decodeUsing: self.
-	^ SIdentifier new binding: binding
+	^ TqIdentifier new binding: binding
 ]
 
 { #category : #public }
@@ -132,7 +131,7 @@ TqTreecodeDecoder >> decodeLiteral [
 	value := index = 0
 		ifTrue: [ self nextLiteralInteger ]
 		ifFalse: [ self literalAt: index ].
-	^ SLiteral new
+	^ TqLiteral new
 		index: index;
 		value: value
 ]
@@ -144,7 +143,7 @@ TqTreecodeDecoder >> decodeMessage [
 	selector := self nextSymbol.
 	receiver := self nextExpression.
 	arguments := self nextExpressionArray.
-	^ SMessage new
+	^ TqMessage new
 		receiver: receiver;
 		selector: selector;
 		arguments: arguments;
@@ -157,11 +156,11 @@ TqTreecodeDecoder >> decodeMethod [
 	type := stream next.
 	type != MethodId
 		ifTrue: [ self error: 'method astcode expected' ].
-	node := SMethod new.
+	node := TqMethod new.
 	next := stream peek.
 	next = PragmaId
 		ifTrue: [ stream next.
-			pragma := SPragma new name: self nextSymbolOrNil.
+			pragma := TqPragma new name: self nextSymbolOrNil.
 			node pragma: pragma ].
 	node
 		compiledCode: method;
@@ -170,26 +169,18 @@ TqTreecodeDecoder >> decodeMethod [
 ]
 
 { #category : #public }
-TqTreecodeDecoder >> decodeNestedDynamicVar [
-	^ SNestedDynamicBinding new
-		name:
-			self nextSymbol.
-
-]
-
-{ #category : #public }
 TqTreecodeDecoder >> decodeReturn [
 	| expression local |
 	local := self nextBoolean.
 	expression := self nextExpression.
-	^ SReturn new
+	^ TqReturn new
 		local: local;
 		expression: expression
 ]
 
 { #category : #public }
 TqTreecodeDecoder >> decodeTemporary [
-	^ STemporaryBinding new
+	^ TqTemporaryBinding new
 		index: self nextInteger;
 		environment: self nextEnvironment
 ]

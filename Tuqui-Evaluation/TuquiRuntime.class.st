@@ -450,18 +450,16 @@ TuquiRuntime >> sendLocal: aSymbol to: receiver with: anArray [
 
 { #category : #initialization }
 TuquiRuntime >> sexpressionsOf: method [
-
 	| expressions treecodes decoder |
 	expressions := self methodExecutableCode: method.
-	expressions == nilObj ifFalse: [ ^ expressions ].
+	expressions == nilObj ifFalse: [ ^expressions ].
 	treecodes := self methodTreecodes: method.
 	decoder := TqTreecodeDecoder new
-		           stream: treecodes bytes readStream;
-		           method: method;
-		           builder: self.
+		stream: treecodes bytes readStream;
+		method: method; builder: self.
 	expressions := decoder decodeMethod.
 	self methodExecutableCode: method put: expressions.
-	^ expressions
+	^expressions
 ]
 
 { #category : #accessing }

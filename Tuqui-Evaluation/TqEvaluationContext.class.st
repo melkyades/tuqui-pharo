@@ -168,7 +168,7 @@ TqEvaluationContext >> staticBindingFor: symbol inModule: module [
 	namespace := runtime moduleNamespace: module.
 	assoc := runtime lookupAssociationFor: symbol in: namespace.
 	assoc ifNil: [ self error: 'unbound variable: ' , symbol asString ].
-	^ SAssociationBinding new association: assoc
+	^ TqAssociationBinding new association: assoc
 ]
 
 { #category : #accessing }
@@ -180,7 +180,7 @@ TqEvaluationContext >> staticBindingForCvar: aSymbol [
 	1 to: namespaces size do: [ :i | 
 		namespace := namespaces at: i. 
 		(runtime lookupAssociationFor: aSymbol in: namespace)
-			ifNotNil: [ :assoc | ^ SAssociationBinding new association: assoc ] ].
+			ifNotNil: [ :assoc | ^ TqAssociationBinding new association: assoc ] ].
 	species := runtime speciesSuperclass: species.
 	species = nilObj ] whileFalse.
 	^ nil
@@ -191,7 +191,7 @@ TqEvaluationContext >> staticBindingForIvar: aSymbol [
 	| ivar |
 	ivar := runtime staticBindingForIvar: aSymbol in: self self.
 	^ ivar > 0
-		ifTrue: [ SInstVarBinding new index: ivar ]
+		ifTrue: [ TqInstVarBinding new index: ivar ]
 ]
 
 { #category : #accessing }
