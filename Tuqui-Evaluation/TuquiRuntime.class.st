@@ -226,14 +226,6 @@ TuquiRuntime >> localSymbolFrom: anObject [
 	^ anObject bytes allButLast asString asSymbol
 ]
 
-{ #category : #initialization }
-TuquiRuntime >> lookup: symbol startingAt: aBehavior [
-
-	^ methodCache
-		  at: symbol -> aBehavior
-		  ifAbsentPut: [ self doLookup: symbol startingAt: aBehavior ]
-]
-
 { #category : #accessing }
 TuquiRuntime >> metaclassInstanceClass: aTqObject [
 	^ aTqObject slotAt: metaclassInstanceClassIndex
