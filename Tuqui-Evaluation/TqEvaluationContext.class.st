@@ -89,7 +89,8 @@ TqEvaluationContext >> instanceVarAt: index put: value [
 
 { #category : #services }
 TqEvaluationContext >> loadAssociationValue: anObject [
-	^runtime loadAssociationValue: anObject
+
+	^ runtime associationValue: anObject
 ]
 
 { #category : #visiting }
@@ -161,26 +162,15 @@ TqEvaluationContext >> staticBindingFor: symbol [
 ]
 
 { #category : #accessing }
-TqEvaluationContext >> staticBindingFor: symbol inModule: module [
-	|  namespace assoc |
-	namespace := runtime moduleNamespace: module.
-	assoc := runtime lookupAssociationFor: symbol in: namespace.
-	assoc ifNil: [ self error: 'unbound variable: ' , symbol asString ].
-	^ TqAssociationBinding new association: assoc
-]
-
-{ #category : #accessing }
-TqEvaluationContext >> staticBindingForCvar: aSymbol [
-	| species namespaces namespace nilObj |
+TqEvaluationContext >> staticBindingForCvar: symbol [
+	| species class nilObj cvars |
 	species := runtime methodClassBinding: self method.
+	class := runtime speciesInstanceClass: species.
 	nilObj := runtime nil.
-	[ namespaces := runtime speciesNamespaces: species.
-	1 to: namespaces size do: [ :i | 
-		namespace := namespaces at: i. 
-		(runtime lookupAssociationFor: aSymbol in: namespace)
-			ifNotNil: [ :assoc | ^ TqAssociationBinding new association: assoc ] ].
-	species := runtime speciesSuperclass: species.
-	species = nilObj ] whileFalse.
+	[ cvars := runtime classCvars: class.
+			cvars associationAtKey: symbol ifPresent: [ :assoc | ^ SAssociationBinding new association: assoc ].
+	class := runtime speciesSuperclass: class.
+	class = nilObj ] whileFalse.
 	^ nil
 ]
 
@@ -194,23 +184,19 @@ TqEvaluationContext >> staticBindingForIvar: aSymbol [
 
 { #category : #accessing }
 TqEvaluationContext >> staticBindingForMvar: symbol [
-	| species module |
-	species := runtime methodClassBinding: self method.
-	module := runtime speciesModule: species.
-	^ self staticBindingFor: symbol inModule: module
+
+		| globals |
+	globals := runtime globals.
+	globals
+		associationAtKey: symbol
+		ifPresent: [ :assoc | ^ TqAssociationBinding new association: assoc ].
+	self error: 'unbound variable: ' , symbol asString
 ]
 
 { #category : #services }
-TqEvaluationContext >> staticBindingForNested: name [ 
-	| binding module |
-	binding := self staticBindingFor: (name at: 1).
-	module := binding valueWithin: self.
-	^self staticBindingFor: (name at: 2) inModule: module
-]
+TqEvaluationContext >> storeAssociation: association value: anObject [
 
-{ #category : #services }
-TqEvaluationContext >> storeAssociation: association value: anObject [ 
-	runtime storeAssociation: association value: anObject 
+	runtime associationValue: association put: anObject
 ]
 
 { #category : #visiting }

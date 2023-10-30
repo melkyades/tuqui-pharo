@@ -15,6 +15,12 @@ TqSmallInteger >> = anObject [
 ]
 
 { #category : #accessing }
+TqSmallInteger >> at: anInteger [
+
+	^ self class new value: (value byteAt: anInteger)
+]
+
+{ #category : #accessing }
 TqSmallInteger >> hash [
 	^value hash
 ]

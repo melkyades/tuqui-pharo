@@ -56,6 +56,15 @@ TuquiRingBootstrapper >> => aSymbol [
 ]
 
 { #category : #accessing }
+TuquiRingBootstrapper >> addClassToGlobals: def [
+
+	| class symbol |
+	class := spec2class at: def.
+	symbol := self addSymbol: def name.
+	image globals atKey: symbol put: class
+]
+
+{ #category : #accessing }
 TuquiRingBootstrapper >> addSymbol: aSymbol [
 
 	| new |
@@ -210,17 +219,17 @@ TuquiRingBootstrapper >> genesis [
 	specs allClasses do: [ :def | self createBehavior: def ].
 	self fixBehaviors.
 	specs allClasses do: [ :def | self createSpecies: def ].
-	self 		createSymbolTable.
+	self createSymbolTable.
 	specs allClasses do: [ :def | self initializeSpecies: def ].
 	image initializeFrom: self.
 	self
-
 		initializeCharacters;
-		initializeClassVars.
+		initializeClassVars; initializeGlobalDictionary.
 	specs allClasses do: [ :def |
 		self
 			initializeMethodDictionary: def;
-			initializeMethodDictionary: def metaclass ]
+			initializeMethodDictionary: def metaclass;
+			addClassToGlobals: def ]
 ]
 
 { #category : #initialization }
@@ -334,6 +343,14 @@ TuquiRingBootstrapper >> initializeClosureIndexes [
 	self
 		cvarOfSpec: spec named: #ReceiverIndex put: receiver;
 		cvarOfSpec: spec named: #ParentEnvironmentIndex put: parent
+]
+
+{ #category : #accessing }
+TuquiRingBootstrapper >> initializeGlobalDictionary [
+
+	| globals |
+	globals := self newVMDictionary: self =>#Dictionary.
+	image globals: globals
 ]
 
 { #category : #'private - helpers' }

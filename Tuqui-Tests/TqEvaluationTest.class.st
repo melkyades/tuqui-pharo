@@ -389,7 +389,7 @@ TqEvaluationTest >> test200createDictionary [
 TqEvaluationTest >> test210addAssociationToDictionary [
 	| class symbol assoc d |
 	class := self globalNamed: #Dictionary.
-	symbol := runtime addSymbol: #foo.
+	symbol := bootstrapper addSymbol: #foo.
 	assoc := runtime sendLocal: #-> to: symbol with: { runtime nil }.
 	d := runtime sendLocal: #new to: class with: {}.
 	runtime sendLocal: #add: to: d with: {assoc}.

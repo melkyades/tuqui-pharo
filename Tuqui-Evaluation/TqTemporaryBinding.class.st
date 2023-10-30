@@ -16,7 +16,8 @@ TqTemporaryBinding >> assign: value within: anEvaluationContext [
 
 { #category : #testing }
 TqTemporaryBinding >> isInCurrentEnvironment [
-	^environment = 1
+
+	^ environment = 0
 ]
 
 { #category : #testing }

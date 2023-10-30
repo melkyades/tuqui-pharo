@@ -133,6 +133,7 @@ TqEvaluator >> initializePrimitives [
 		at: #LoadClass put: self primitiveLoadClass;
 		at: #FlushMethod put: self primitiveFlushMethodFromCaches;
 		at: #FlushSymbol put: self primitiveFlushSymbolFromCaches;
+		at: #SymbolShortAtOffset put: self primitiveSymbolShortAtOffset;
 		at: #VMDictionaryNew put: self primitiveVMDictionaryNew;
 		at: #VMDictionaryKeys put: self primitiveVMDictionaryKeys;
 		at: #VMDictionaryAt put: self primitiveVMDictionaryAt;
@@ -150,6 +151,7 @@ TqEvaluator >> initializeUndermessages [
 		at: #_byteAt:put: put: self underprimitiveByteAtPut;
 		at: #_basicHash put: self underprimitiveBasicHash;
 		at: #_basicHash: put: self underprimitiveBasicHashPut;
+		at: #_size put: self underprimitiveSize;
 		at: #_bitShiftLeft: put: self underprimitiveBitShiftLeft;
 		at: #_smiPlus: put: self underprimitiveSMIPlus;
 		at: #_smiMinus: put: self underprimitiveSMIMinus;
@@ -291,14 +293,17 @@ TqEvaluator >> primitiveLoadClass [
 
 { #category : #primitives }
 TqEvaluator >> primitiveNew [
+
 	^ [ runtime newSlotsOf: context self ]
 ]
 
 { #category : #primitives }
 TqEvaluator >> primitiveNewBytesSized [
+
 	| size |
-	^ [ size := context firstArgument value.
-	runtime newBytesOf: context self sized: size ]
+	^ [
+	  size := context firstArgument value.
+	  runtime newBytesOf: context self size: size ]
 ]
 
 { #category : #primitives }
@@ -307,7 +312,7 @@ TqEvaluator >> primitiveNewPointersSized [
 	| size |
 	^ [
 	  size := context firstArgument value.
-	  runtime newSlots: context self size: size ]
+	  runtime newSlotsOf: context self size: size ]
 ]
 
 { #category : #primitives }
@@ -321,6 +326,14 @@ TqEvaluator >> primitiveSetBehavior [
 { #category : #primitives }
 TqEvaluator >> primitiveSize [
 	^ [ runtime newInteger: (runtime arrayedSizeOf: context self) ]
+]
+
+{ #category : #primitives }
+TqEvaluator >> primitiveSymbolShortAtOffset [
+
+	^ [
+
+	  runtime newInteger: (context self bytes uint16AtOffset: context firstArgument value) ]
 ]
 
 { #category : #primitives }
@@ -530,4 +543,10 @@ TqEvaluator >> underprimitiveSMIRemainderTowardZero [
 { #category : #accessing }
 TqEvaluator >> underprimitiveSMITimes [
 	^ [ :receiver :arguments | runtime newInteger: receiver value * arguments first value ]
+]
+
+{ #category : #underprimitives }
+TqEvaluator >> underprimitiveSize [
+
+	^ [ :receiver :arguments | runtime newInteger: receiver size ]
 ]

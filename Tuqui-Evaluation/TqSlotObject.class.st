@@ -44,11 +44,6 @@ TqSlotObject >> pointersSize [
 ]
 
 { #category : #accessing }
-TqSlotObject >> size [
-	^header size
-]
-
-{ #category : #accessing }
 TqSlotObject >> slotAt: index [
 	^ slots at: index
 ]

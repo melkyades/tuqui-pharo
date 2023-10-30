@@ -16,6 +16,18 @@ TqByteObject >> asLocalString [
 ]
 
 { #category : #accessing }
+TqByteObject >> at: index [
+
+	^ bytes at: index
+]
+
+{ #category : #accessing }
+TqByteObject >> at: index put: anInteger [
+
+	^ bytes at: index put: anInteger
+]
+
+{ #category : #accessing }
 TqByteObject >> byteAt: index [
 
 	^ bytes at: index

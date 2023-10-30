@@ -16,7 +16,8 @@ Class {
 		'wordSize',
 		'maxSMI',
 		'minSMI',
-		'symbols'
+		'symbols',
+		'globals'
 	],
 	#classVars : [
 		'KernelSpec',
@@ -70,6 +71,18 @@ TuquiImage >> basicNewBehavior: instSize [
 ]
 
 { #category : #initialization }
+TuquiImage >> basicNewBytesSized: anInteger [
+
+	| header result |
+	header := TqObjectHeader new
+		          bytes: true arrayed: true named: false;
+		          size: anInteger;
+		          hash: 0.
+	result := TqByteObject new.
+	^ result header: header
+]
+
+{ #category : #initialization }
 TuquiImage >> basicNewBytesWith: aByteObject [
 
 	| header result |
@@ -104,6 +117,17 @@ TuquiImage >> basicNewSlotsSized: anInteger [
 { #category : #accessing }
 TuquiImage >> false [
 	^ falseObj
+]
+
+{ #category : #initialization }
+TuquiImage >> globals [
+
+^	globals 
+]
+
+{ #category : #initialization }
+TuquiImage >> globals: aTqVMDictionary [
+	globals := aTqVMDictionary
 ]
 
 { #category : #initialization }
@@ -145,6 +169,14 @@ TuquiImage >> newBytes: behavior contents: aByteObject [
 ]
 
 { #category : #initialization }
+TuquiImage >> newBytes: behavior size: anInteger [
+
+	| result |
+	result := self basicNewBytesSized: anInteger.
+	^ result behavior: behavior
+]
+
+{ #category : #initialization }
 TuquiImage >> newSlots: class [
 	^self newSlots: class size: 0
 ]
@@ -162,7 +194,7 @@ TuquiImage >> newVMDictionary: behavior size: anInteger [
 
 	| result |
 	result := self basicNewSlots: TqVMDictionary sized: anInteger.
-	^ result behavior: behavior
+	^ result behavior: behavior; runtime: self
 ]
 
 { #category : #accessing }
