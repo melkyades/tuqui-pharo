@@ -154,9 +154,7 @@ TqEvaluationContext >> stackTemporaryAt: index put: value [
 ]
 
 { #category : #visiting }
-TqEvaluationContext >> staticBindingFor: aSymbol [
-	| symbol |
-	symbol := runtime symbolFrom: aSymbol.
+TqEvaluationContext >> staticBindingFor: symbol [
 	(self staticBindingForIvar: symbol) ifNotNil: [ :b | ^ b ].
 	(self staticBindingForCvar: symbol) ifNotNil: [ :b | ^ b ].
 	^ self staticBindingForMvar: symbol

@@ -20,8 +20,16 @@ TqRecursiveLinkedContext >> evaluateFor: interpreter [
 ]
 
 { #category : #'as yet unclassified' }
+TqRecursiveLinkedContext >> nonLocalReturn: anObject [
+
+	nonLocalReturn value: anObject.
+	"unreachable"
+	self assert: false
+]
+
+{ #category : #'as yet unclassified' }
 TqRecursiveLinkedContext >> return: anObject [
 	^self isBlock
-		ifTrue: [ nonLocalReturn value: anObject ]
+		ifTrue: [ self homeContext nonLocalReturn: anObject ]
 		ifFalse: [ anObject ]
 ]

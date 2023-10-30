@@ -30,6 +30,6 @@ TqLocalBinding >> index: anInteger [
 
 { #category : #testing }
 TqLocalBinding >> isInStack [
-	self ASSERT: false.
-	^ environment = 0
+
+	^ environment isNil
 ]

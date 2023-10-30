@@ -38,21 +38,27 @@ TqLinkedContext >> arguments: aCollection [
 
 { #category : #services }
 TqLinkedContext >> backtrace [
-	| bt next |
+
+	| bt current |
 	bt := OrderedCollection new.
-	next := self.
-	[ next notNil and: [ next method notNil ] ]
-		whileTrue: [ bt
-				add:
-					{next method signature.
-					next self} , next arguments.
-			next := next parent ].
+	current := self.
+	[ current notNil ] whileTrue: [
+		bt add: {
+				runtime methodSignature: current method.
+				current self } , current arguments.
+		current := current parent ].
 	^ bt
 ]
 
 { #category : #visiting }
 TqLinkedContext >> beBlock [
 	isBlock := true
+]
+
+{ #category : #visiting }
+TqLinkedContext >> block [
+
+	^runtime closureBlock: environment
 ]
 
 { #category : #accessing }
@@ -120,6 +126,24 @@ TqLinkedContext >> initialize [
 ]
 
 { #category : #visiting }
+TqLinkedContext >> initializeForBlock: sblock args: anArray closure: closure [
+	"When the block is not inlined, closure becomes the environment of the new context.
+	But when it is inlined, the environment is the one of the builder, which is already
+	set because we copied from the builder frame."
+
+
+	| count |
+	sblock isInlined
+		ifTrue: [ anArray
+				with: sblock inlinedArgs
+				do: [ :arg :i | temporaries at: i put: arg ] ]
+		ifFalse: [ count := runtime blockTempCount: sblock compiledCode.
+			temporaries := Array new: count.
+			arguments := anArray.
+			environment := closure. ]
+]
+
+{ #category : #visiting }
 TqLinkedContext >> isBlock [
 	^isBlock
 	
@@ -132,7 +156,9 @@ TqLinkedContext >> isHomeOf: env [
 
 { #category : #visiting }
 TqLinkedContext >> method [
-	^method
+
+	| block |
+	^ method ifNil: [ block := runtime closureBlock: environment. ^runtime blockMethod: block ]
 ]
 
 { #category : #accessing }

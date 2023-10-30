@@ -30,7 +30,9 @@ Class {
 		'arrayClass',
 		'blockClass',
 		'closureClass',
-		'blockFormatIndex'
+		'blockFormatIndex',
+		'blockMethodIndex',
+		'classCVarsIndex'
 	],
 	#pools : [
 		'SCompiledBlockFlags',
@@ -62,10 +64,18 @@ TuquiRuntime >> behaviorOf: aTqObject [
 ]
 
 { #category : #initialization }
+TuquiRuntime >> blockCapturesHome: block [
+
+	| flags |
+	flags := block slotAt: blockFormatIndex.
+	^ flags value anyMask: BlockCapturesHome
+]
+
+{ #category : #initialization }
 TuquiRuntime >> blockCapturesSelf: block [
 
 	| flags |
-	flags := block slotAt: methodFormatIndex.
+	flags := block slotAt: blockFormatIndex.
 	^ flags value anyMask: BlockCapturesSelf
 ]
 
@@ -90,11 +100,23 @@ TuquiRuntime >> blockExecutableCode: aTqObject put: anObject [
 ]
 
 { #category : #initialization }
+TuquiRuntime >> blockMethod: aTqObject [
+
+	^ aTqObject slotAt: blockMethodIndex.
+]
+
+{ #category : #initialization }
 TuquiRuntime >> blockTempCount: aTqObject [
 
 	| flags |
 	flags := aTqObject slotAt: blockFormatIndex.
 	^ flags value bitsAt: BlockTempCount
+]
+
+{ #category : #initialization }
+TuquiRuntime >> classIvars: anLMRObject [
+
+	^ anLMRObject slotAt: speciesIvarsIndex
 ]
 
 { #category : #accessing }
@@ -106,6 +128,18 @@ TuquiRuntime >> className: aTqObject [
 TuquiRuntime >> closureBlock: closure [
 
 	^ closure slotAt: closureBlockIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> closureHome: closure [
+
+	| block |
+	block := self closureBlock: closure.
+	(self blockCapturesHome: block) ifFalse: [
+		self error: 'closure has no home' ].
+	^ (self blockCapturesSelf: block)
+		  ifTrue: [ closure at: 2 ]
+		  ifFalse: [ closure at: 1 ]
 ]
 
 { #category : #accessing }
@@ -164,6 +198,8 @@ TuquiRuntime >> initializeFrom: bootstrapper [
 		                      indexOf: 'class'.
 	classNameIndex := (bootstrapper => #Class) allInstVarNames indexOf:
 		                  'name'.
+	classCVarsIndex := (bootstrapper => #Class) allInstVarNames indexOf:
+		                  'classVars'.
 	closureBlockIndex := (bootstrapper => #Closure) allInstVarNames
 		                     indexOf: 'block'.
 	metaclassInstanceClassIndex := (bootstrapper => #Metaclass)
@@ -181,9 +217,12 @@ TuquiRuntime >> initializeFrom: bootstrapper [
 		                       allInstVarNames indexOf: 'selector'.
 	methodInstSize := (bootstrapper => #CompiledMethod) allInstVarNames
 		                  size.
-		
-	blockFormatIndex := (bootstrapper => #CompiledBlock)
-		                     allInstVarNames indexOf: 'format'.
+
+	blockFormatIndex := (bootstrapper => #CompiledBlock) allInstVarNames
+		                    indexOf: 'format'.
+
+	blockMethodIndex := (bootstrapper => #CompiledBlock) allInstVarNames
+		                    indexOf: 'method'.
 
 	speciesInstanceBehaviorIndex := (bootstrapper => #Species)
 		                                allInstVarNames indexOf:
@@ -201,6 +240,12 @@ TuquiRuntime >> initializeFrom: bootstrapper [
 	closureClass := bootstrapper classNamed: #Closure.
 	arrayClass := bootstrapper classNamed: #Array.
 	self useStackedIterativeEvaluator
+]
+
+{ #category : #initialization }
+TuquiRuntime >> instanceVarOf: receiver at: anInteger [
+
+	^ receiver slotAt: anInteger
 ]
 
 { #category : #initialization }
@@ -284,6 +329,22 @@ TuquiRuntime >> methodFor: symbol in: behavior [
 	| md |
 	md := self behaviorMethodDictionary: behavior.
 	^ md atKey: symbol ifAbsent: nil
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodSelector: aTqObject [
+
+	^ aTqObject slotAt: methodSelectorIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> methodSignature: method [
+
+	| species classname selector |
+	selector := self methodSelector: method.
+	species := self methodClassBinding: method.
+	classname := self speciesLocalName: species.
+	^ classname -> selector asLocalString
 ]
 
 { #category : #initialization }
@@ -473,6 +534,13 @@ TuquiRuntime >> speciesInstanceBehavior: aTqObject [
 	^aTqObject slotAt: speciesInstanceBehaviorIndex
 ]
 
+{ #category : #accessing }
+TuquiRuntime >> speciesInstanceClass: species [
+
+^	(self isMetaclass: species) ifTrue: [ self metaclassInstanceClass: species]
+	ifFalse: [ species ]
+]
+
 { #category : #initialization }
 TuquiRuntime >> speciesInstanceSize: aTqObject [
 	^ (aTqObject slotAt: speciesFormatIndex) value bitAnd: 16r7F.
@@ -494,6 +562,22 @@ TuquiRuntime >> speciesLocalName: species [
 TuquiRuntime >> speciesSuperclass: aTqObject [
 
 	^ aTqObject slotAt: speciesSuperclassIndex
+]
+
+{ #category : #initialization }
+TuquiRuntime >> staticBindingForIvar: symbol in: receiver [
+
+	| class all slots bytes |
+	class := self speciesFor: receiver.
+	all := Array new: 0.
+	[ class !== nilObj ] whileTrue: [
+		slots := self classIvars: class.
+		slots == nilObj ifFalse: [ all := slots slots , all ].
+		class := self speciesSuperclass: class ].
+	bytes := symbol bytes.
+	all withIndexDo: [ :ivar :index |
+		ivar bytes = bytes ifTrue: [ ^ index ] ].
+	^ 0
 ]
 
 { #category : #initialization }
