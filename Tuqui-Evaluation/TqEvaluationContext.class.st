@@ -32,23 +32,22 @@ TqEvaluationContext >> backtrace [
 
 { #category : #visiting }
 TqEvaluationContext >> captureClosure: anSBlock [
+
 	| closure s i type env arg |
 	closure := runtime newClosureFor: anSBlock compiledCode.
 	s := anSBlock capturedVariables readStream.
 	i := 1.
-	[ s atEnd ]
-		whileFalse: [ type := s next.
-			type = Self
-				ifTrue: [ closure at: i put: self self ].
-			type = Environment
-				ifTrue: [ closure at: i put: self environment ].
-			type = EnvironmentValue
-				ifTrue: [ env := self environment at: s next.
-					closure at: i put: env ].
-			type = LocalArgument
-				ifTrue: [ arg := self argumentAt: s next.
-					closure at: i put: arg ].
-			i := i + 1 ].
+	[ s atEnd ] whileFalse: [
+		type := s next.
+		type = Self ifTrue: [ closure at: i put: self self ].
+		type = Environment ifTrue: [ closure at: i put: self environment ].
+		type = EnvironmentValue ifTrue: [
+			env := self environmentValueAt: s next.
+			closure at: i put: env ].
+		type = LocalArgument ifTrue: [
+			arg := self argumentAt: s next.
+			closure at: i put: arg ].
+		i := i + 1 ].
 	^ closure
 ]
 

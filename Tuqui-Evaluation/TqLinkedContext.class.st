@@ -44,8 +44,8 @@ TqLinkedContext >> backtrace [
 	current := self.
 	[ current notNil ] whileTrue: [
 		bt add: {
-				runtime methodSignature: current method.
-				current self } , current arguments.
+				[runtime methodSignature: current method] on: Error do: [#nil->#nil].
+				current self } , (current arguments ifNil: [#()]).
 		current := current parent ].
 	^ bt
 ]
@@ -78,10 +78,14 @@ TqLinkedContext >> environmentFor: anInteger [
 	 0: current env.
  	>0: index of env in current env. "
 
-	anInteger = 0
-		ifTrue: [ ^ environment ].
-	anInteger = -1
-		ifTrue: [ ^ temporaries ].
+	anInteger = 0 ifTrue: [ ^ environment ].
+	anInteger = -1 ifTrue: [ ^ temporaries ].
+	
+	^ self environmentValueAt: anInteger
+]
+
+{ #category : #visiting }
+TqLinkedContext >> environmentValueAt: anInteger [
 	^ environment at: anInteger
 ]
 
@@ -126,21 +130,13 @@ TqLinkedContext >> initialize [
 ]
 
 { #category : #visiting }
-TqLinkedContext >> initializeForBlock: sblock args: anArray closure: closure [
-	"When the block is not inlined, closure becomes the environment of the new context.
-	But when it is inlined, the environment is the one of the builder, which is already
-	set because we copied from the builder frame."
-
+TqLinkedContext >> initializeForBlock: block args: anArray closure: closure [
 
 	| count |
-	sblock isInlined
-		ifTrue: [ anArray
-				with: sblock inlinedArgs
-				do: [ :arg :i | temporaries at: i put: arg ] ]
-		ifFalse: [ count := runtime blockTempCount: sblock compiledCode.
-			temporaries := Array new: count.
-			arguments := anArray.
-			environment := closure. ]
+	count := runtime blockTempCount: block.
+	temporaries := Array new: count.
+	arguments := anArray.
+	environment := closure
 ]
 
 { #category : #visiting }
@@ -219,6 +215,7 @@ TqLinkedContext >> stackTemporaryAt: index put: value [
 
 { #category : #visiting }
 TqLinkedContext >> temporaryAt: index in: environmentIndex [
+
 	| env |
 	environmentIndex ifNil: [ ^ self stackTemporaryAt: index ].
 	env := self environmentFor: environmentIndex.
@@ -227,6 +224,7 @@ TqLinkedContext >> temporaryAt: index in: environmentIndex [
 
 { #category : #visiting }
 TqLinkedContext >> temporaryAt: index in: environmentIndex put: value [
+
 	| env |
 	environmentIndex ifNil: [ ^ self stackTemporaryAt: index put: value ].
 	env := self environmentFor: environmentIndex.

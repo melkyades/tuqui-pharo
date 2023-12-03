@@ -130,6 +130,8 @@ TqEvaluator >> initializePrimitives [
 		put: self primitiveClosureValueWithWithWith;
 		at: #ClosureValueWithArguments
 		put: self primitiveClosureValueWithArgs;
+		at: #ClosureWhileTrue put: self primitiveClosureWhileTrue;
+		at: #ClosureWhileFalse put: self primitiveClosureWhileFalse;
 		at: #LoadClass put: self primitiveLoadClass;
 		at: #FlushMethod put: self primitiveFlushMethodFromCaches;
 		at: #FlushSymbol put: self primitiveFlushSymbolFromCaches;
@@ -212,7 +214,7 @@ TqEvaluator >> primitiveBehavior [
 	| receiver |
 	^ [ receiver := context self.
 	receiver isImmediate
-		ifTrue: [ self smallintBehavior ]
+		ifTrue: [ runtime smallIntegerBehavior ]
 		ifFalse: [ receiver behavior ] ]
 ]
 
@@ -249,6 +251,20 @@ TqEvaluator >> primitiveClosureValueWithWithWith [
 		  with: context firstArgument
 		  with: context secondArgument
 		with: context thirdArgument  ]
+]
+
+{ #category : #visiting }
+TqEvaluator >> primitiveClosureWhileFalse [
+	^ [ self
+		evaluateClosure: context self
+		whileFalse: context arguments first ]
+]
+
+{ #category : #visiting }
+TqEvaluator >> primitiveClosureWhileTrue [
+	^ [ self
+		evaluateClosure: context self
+		whileTrue: context arguments first ]
 ]
 
 { #category : #primitives }
