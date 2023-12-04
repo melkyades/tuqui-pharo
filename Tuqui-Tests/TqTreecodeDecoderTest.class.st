@@ -22,8 +22,12 @@ TqTreecodeDecoderTest >> compile: aString [
 { #category : #compiling }
 TqTreecodeDecoderTest >> compile: aString in: aSpecies [
 
+	| decoder |
 	method :=  SCompiler compile: aString in: aSpecies.
-	sexpression := method sexpressions
+	decoder := TqTreecodeDecoder new
+		stream: method astcodes readStream;
+		method: method.
+	sexpression := decoder decodeMethod
 ]
 
 { #category : #tests }
