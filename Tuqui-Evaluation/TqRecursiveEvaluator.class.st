@@ -59,28 +59,6 @@ TqRecursiveEvaluator >> hasFinished [
 ]
 
 { #category : #visiting }
-TqRecursiveEvaluator >> initializePrimitives [ 
-	super initializePrimitives.
-	primitives 
-		at: #ClosureWhileTrue put: self primitiveClosureWhileTrue;
-		at: #ClosureWhileFalse put: self primitiveClosureWhileFalse
-]
-
-{ #category : #visiting }
-TqRecursiveEvaluator >> primitiveClosureWhileFalse [
-	^ [ self
-		evaluateClosure: context self
-		whileFalse: context arguments first ]
-]
-
-{ #category : #visiting }
-TqRecursiveEvaluator >> primitiveClosureWhileTrue [
-	^ [ self
-		evaluateClosure: context self
-		whileTrue: context arguments first ]
-]
-
-{ #category : #visiting }
 TqRecursiveEvaluator >> send: aSymbol to: receiver with: arguments super: aBoolean sendSite: anSMessage [
 
 	| behavior method environment size |
