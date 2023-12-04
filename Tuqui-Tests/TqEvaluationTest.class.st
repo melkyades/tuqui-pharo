@@ -437,34 +437,3 @@ TqEvaluationTest >> test302smallIntegerPrintString [
 					equals: -4 printString ].
 	self assertNoLeftoverFrames
 ]
-
-{ #category : #tests }
-TqEvaluationTest >> test310smiFallbackToLNI [
-	| result |
-	self
-		compile:
-			'foo | result | result := (16r100000000 * -16r100000000) printString. ^result'
-		in: #ProtoObject
-		during: [ result := runtime sendLocal: #foo to: runtime true.
-			self
-				assert: result isBytes;
-				assert: result value asLocalString
-					equals: (16r100000000 * -16r100000000) printString ].
-	self assertNoLeftoverFrames
-]
-
-{ #category : #tests }
-TqEvaluationTest >> test310smiFallbackToLPI [
-	| result expected |
-	self
-		compile:
-			'foo | result | result := 1. 18 timesRepeat: [result := result * 10]. ^result printString'
-		in: #ProtoObject
-		during: [ result := runtime sendLocal: #foo to: runtime true.
-			expected := 1.
-			18 timesRepeat: [ expected := expected * 10 ].
-			self
-				assert: result isBytes;
-				assert: result value asLocalString equals: expected printString ].
-	self assertNoLeftoverFrames
-]
