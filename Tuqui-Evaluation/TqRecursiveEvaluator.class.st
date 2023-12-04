@@ -23,6 +23,7 @@ TqRecursiveEvaluator >> evaluateClosure: receiver whileTrue: arg [
 
 { #category : #private }
 TqRecursiveEvaluator >> evaluateClosure: closure withArgs: arguments [
+
 	| block sblock receiver result |
 	block := runtime closureBlock: closure.
 	sblock := runtime blockExecutableCode: block.
@@ -30,11 +31,13 @@ TqRecursiveEvaluator >> evaluateClosure: closure withArgs: arguments [
 		            ifTrue: [ closure at: 1 ]
 		            ifFalse: [ nilObj ].
 	context := TqRecursiveLinkedContext new
-		runtime: runtime;
-		beBlock;
-		parent: context;
-		self: receiver;
-		initializeForBlock: sblock args: arguments closure: closure.
+		           runtime: runtime;
+		           beBlock;
+		           parent: context;
+		           self: receiver;
+		           initializeForBlock: block
+		           args: arguments
+		           closure: closure.
 	result := nilObj.
 	sblock statements do: [ :node | result := node acceptVisitor: self ].
 	^ result
