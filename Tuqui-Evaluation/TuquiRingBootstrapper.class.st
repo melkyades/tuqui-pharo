@@ -660,6 +660,8 @@ TuquiRingBootstrapper >> transferLiteralDeep: anObject [
 	anObject isString ifTrue: [ ^ self newString: anObject ].
 	class = ByteArray ifTrue: [
 		^ self newBytes: #ByteArray contents: anObject ].
+	anObject isFloat ifTrue: [
+		^ self newBytes: #ByteArray contents: (anObject asIEEE64BitWord asByteArrayOfSize: 8) reversed].
 	(class inheritsFrom: TqObject) ifTrue: [ ^ anObject ].
 	class == SCompiledBlock ifTrue: [ ^ self transferBlock: anObject ].
 	size := class isVariable
