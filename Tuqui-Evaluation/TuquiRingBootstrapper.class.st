@@ -30,6 +30,21 @@ TuquiRingBootstrapper class >> kernelSpec [
 ]
 
 { #category : #accessing }
+TuquiRingBootstrapper class >> readAWFYIntoKernel [
+
+	| repo package version snap defs |
+	repo := TonelRepository new directory: '..' asFileReference.
+	package := KernelSpec ensurePackageNamed: #Kernel.
+	version := repo versionWithInfo:
+		           (repo versionInfoFromVersionNamed: #AWFY).
+	snap := version snapshot.
+	defs := snap definitions.
+	defs do: [ :each |
+		each ensureRingDefinitionIn: KernelSpec package: package ].
+	KernelSpec clean
+]
+
+{ #category : #accessing }
 TuquiRingBootstrapper class >> readSpec: specName at: path [
 	| root repo spec dir |
 	root := '..' asFileReference.
