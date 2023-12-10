@@ -38,7 +38,7 @@ Class {
 { #category : #initialization }
 BytecodeGenerator >> assign: aCollection [
 	| op |
-	op := SOpAssign new assignees: aCollection.
+	op := TqOpAssign new assignees: aCollection.
 	operations add: op
 
 ]
@@ -47,8 +47,8 @@ BytecodeGenerator >> assign: aCollection [
 BytecodeGenerator >> branchIf: aBoolean [
 	| class op |
 	class := aBoolean
-		ifTrue: [ SOpJumpTrue ]
-		ifFalse: [ SOpJumpFalse ].
+		ifTrue: [ TqOpJumpTrue ]
+		ifFalse: [ TqOpJumpFalse ].
 		op := class new.
 	operations add: op.
 	^op
@@ -67,7 +67,7 @@ BytecodeGenerator >> currentPC [
 { #category : #initialization }
 BytecodeGenerator >> dispatch: message [
 	| op count |
-	op := SOpDispatchMessage new message: message.
+	op := TqOpDispatchMessage new message: message.
 	operations add: op.
 	dropsArguments ifTrue: [ ^self ].
 	
@@ -98,7 +98,7 @@ BytecodeGenerator >> dropToS [
 { #category : #initialization }
 BytecodeGenerator >> dropToS: anInteger [
 	| op |
-	op := SOpDropToS new count: anInteger.
+	op := TqOpDropToS new count: anInteger.
 	operations add: op.
 	stackTop := stackTop - anInteger
 ]
@@ -116,7 +116,7 @@ BytecodeGenerator >> initialize [
 { #category : #initialization }
 BytecodeGenerator >> jump [
 	| op |
-	op := SOpJump new.
+	op := TqOpJump new.
 	operations add: op.
 	^op
 ]
@@ -124,26 +124,26 @@ BytecodeGenerator >> jump [
 { #category : #initialization }
 BytecodeGenerator >> jumpTo: anInteger [
 | op |
-op := SOpJump new target: anInteger.
+op := TqOpJump new target: anInteger.
 	operations add: op
 ]
 
 { #category : #initialization }
 BytecodeGenerator >> loadRfromStack: anInteger [
 	| op |
-	op := SOpLoadRfromStack new index: anInteger.
+	op := TqOpLoadRfromStack new index: anInteger.
 	operations add: op
 
 ]
 
 { #category : #initialization }
 BytecodeGenerator >> loadRwithNil [
-	operations add: SOpLoadRwithNil new
+	operations add: TqOpLoadRwithNil new
 ]
 
 { #category : #initialization }
 BytecodeGenerator >> loadRwithSelf [
-	operations add: SOpLoadRwithSelf new
+	operations add: TqOpLoadRwithSelf new
 ]
 
 { #category : #initialization }
@@ -153,13 +153,13 @@ BytecodeGenerator >> operations [
 
 { #category : #initialization }
 BytecodeGenerator >> popR [
-	operations add: SOpPopR new.
+	operations add: TqOpPopR new.
 	stackTop := stackTop - 1
 ]
 
 { #category : #initialization }
 BytecodeGenerator >> primitive: aClosure [
-	operations add: (SOpPrimitive new block: aClosure)
+	operations add: (TqOpPrimitive new block: aClosure)
 ]
 
 { #category : #accessing }
@@ -169,7 +169,7 @@ BytecodeGenerator >> primitives: aCollection [
 
 { #category : #initialization }
 BytecodeGenerator >> pushR [
-	operations add: SOpPushR new.
+	operations add: TqOpPushR new.
 	stackTop := stackTop + 1
 ]
 
@@ -182,15 +182,15 @@ BytecodeGenerator >> reset [
 
 { #category : #initialization }
 BytecodeGenerator >> return [
-	operations add: SOpReturn new
+	operations add: TqOpReturn new
 ]
 
 { #category : #initialization }
 BytecodeGenerator >> return: isLocal [
 	|  class |
 	class := (isLocal andNot: [ inBlock ])
-		ifTrue: [ SOpReturn ]
-		ifFalse: [ SOpNonLocalReturn ].
+		ifTrue: [ TqOpReturn ]
+		ifFalse: [ TqOpNonLocalReturn ].
 	operations add: class new
 ]
 
@@ -222,13 +222,6 @@ BytecodeGenerator >> runtime: aPowertalkRuntime [
 	toByDo := runtime symbolFromLocal: #to:by:do:.
 	andNot := runtime symbolFromLocal: #andNot:.
 	orNot := runtime symbolFromLocal: #orNot:
-]
-
-{ #category : #initialization }
-BytecodeGenerator >> storeRintoFrameAt: anInteger [
-	| op |
-	op := SOpStoreRintoFrame new index: anInteger.
-	operations add: op
 ]
 
 { #category : #initialization }
