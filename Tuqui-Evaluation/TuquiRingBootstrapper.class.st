@@ -30,6 +30,21 @@ TuquiRingBootstrapper class >> kernelSpec [
 ]
 
 { #category : #accessing }
+TuquiRingBootstrapper class >> readAWFYIntoKernel [
+
+	| repo package version snap defs |
+	repo := TonelRepository new directory: '..' asFileReference.
+	package := KernelSpec ensurePackageNamed: #Kernel.
+	version := repo versionWithInfo:
+		           (repo versionInfoFromVersionNamed: #AWFY).
+	snap := version snapshot.
+	defs := snap definitions.
+	defs do: [ :each |
+		each ensureRingDefinitionIn: KernelSpec package: package ].
+	KernelSpec clean
+]
+
+{ #category : #accessing }
 TuquiRingBootstrapper class >> readSpec: specName at: path [
 	| root repo spec dir |
 	root := '..' asFileReference.
@@ -660,6 +675,8 @@ TuquiRingBootstrapper >> transferLiteralDeep: anObject [
 	anObject isString ifTrue: [ ^ self newString: anObject ].
 	class = ByteArray ifTrue: [
 		^ self newBytes: #ByteArray contents: anObject ].
+	anObject isFloat ifTrue: [
+		^ self newBytes: #ByteArray contents: (anObject asIEEE64BitWord asByteArrayOfSize: 8) reversed].
 	(class inheritsFrom: TqObject) ifTrue: [ ^ anObject ].
 	class == SCompiledBlock ifTrue: [ ^ self transferBlock: anObject ].
 	size := class isVariable
